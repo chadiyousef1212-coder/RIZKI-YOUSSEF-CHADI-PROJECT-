@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>TechStore – Premium Backoffice</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --primary: #6366f1;
+            --dark: #0f172a;
+            --sidebar-width: 260px;
+        }
+
+        body { 
+            background: #f8fafc; 
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            position: fixed;
+            background: var(--dark);
+            color: white;
+            padding: 2rem 1rem;
+            z-index: 1000;
+        }
+
+        .sidebar-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 1rem;
+            color: #94a3b8;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+
+        .sidebar a:hover, .sidebar a.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .sidebar a.active { background: var(--primary); shadow: 0 4px 15px rgba(99, 102, 241, 0.4); }
+
+        /* --- MAIN LAYOUT --- */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar-custom {
+            background: white;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .container-fluid { padding: 2rem; }
+
+        .module { display: none; }
+        .module.active { display: block; animation: fadeIn 0.3s ease; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- CARDS & UI --- */
+        .glass-card {
+            background: white;
+            border-radius: 16px;
+            border: none;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* FIX: The Scrollable Table Container */
+        .table-responsive-custom {
+            max-height: 500px;
+            overflow-y: auto;
+            border-radius: 12px;
+            background: white;
+        }
+
+        .table thead {
+            position: sticky;
+            top: 0;
+            background: #f8fafc;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="sidebar-brand"><i class="fas fa-microchip text-primary"></i> TechStore</div>
+    <a onclick="showModule('dashboard', this)" class="active"><i class="fas fa-home"></i> Dashboard</a>
+    <a onclick="showModule('products', this)"><i class="fas fa-box"></i> Produits</a>
+    <a onclick="showModule('categories', this)"><i class="fas fa-list"></i> Catégories</a>
+</div>
+
+<div class="main-content">
+    <nav class="navbar-custom">
+        <h5 class="fw-bold m-0 text-muted">Smart Backoffice v2.0</h5>
+        <div id="apiStatus" class="badge bg-light text-dark border">
+            <i class="fas fa-sync fa-spin"></i> API Syncing...
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        
+        <div id="dashboard" class="module active">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="glass-card text-center">
+                        <div class="text-primary mb-2"><i class="fas fa-boxes fa-2x"></i></div>
+                        <h6 class="text-muted small fw-bold">PRODUITS</h6>
+                        <h2 id="kpiProducts" class="fw-bold m-0">0</h2>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="glass-card text-center">
+                        <div class="text-success mb-2"><i class="fas fa-warehouse fa-2x"></i></div>
+                        <h6 class="text-muted small fw-bold">STOCK TOTAL</h6>
+                        <h2 id="kpiStock" class="fw-bold m-0">0</h2>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="glass-card text-center">
+                        <div class="text-warning mb-2"><i class="fas fa-coins fa-2x"></i></div>
+                        <h6 class="text-muted small fw-bold">VALEUR (€)</h6>
+                        <h2 id="kpiValue" class="fw-bold m-0">0</h2>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-2">
+                <div class="col-md-8">
+                    <div class="glass-card">
+                        <h6 class="fw-bold mb-4">Analyse du Stock par Catégorie</h6>
+                        <div style="height: 300px;"><canvas id="chart"></canvas></div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="glass-card bg-dark text-white">
+                        <h6 class="fw-bold mb-3">Logs Système</h6>
+                        <div id="apiInfo" class="small opacity-75">Initialisation...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="products" class="module">
+            <div class="glass-card">
+                <h5 class="fw-bold mb-4">Ajouter / Modifier un Produit</h5>
+                <form id="productForm" class="row g-3">
+                    <input type="hidden" id="pid">
+                    <div class="col-md-4">
+                        <input id="pname" class="form-control" placeholder="Nom du produit" required>
+                    </div>
+                    <div class="col-md-2">
+                        <input id="pprice" type="number" step="0.01" class="form-control" placeholder="Prix €" required>
+                    </div>
+                    <div class="col-md-2">
+                        <input id="pqty" type="number" class="form-control" placeholder="Quantité" required>
+                    </div>
+                    <div class="col-md-3">
+                        <select id="pcat" class="form-select"></select>
+                    </div>
+                    <div class="col-md-1">
+                        <button class="btn btn-primary w-100"><i class="fas fa-check"></i></button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="glass-card p-0 overflow-hidden">
+                <div class="p-3 border-bottom d-flex justify-content-between">
+                    <input class="form-control w-50" placeholder="Rechercher..." oninput="renderProducts(this.value)">
+                </div>
+                <div class="table-responsive-custom">
+                    <table class="table table-hover align-middle m-0">
+                        <thead class="table-light">
+                            <tr><th>Produit</th><th>Prix</th><th>Stock</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="productList"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="categories" class="module">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="glass-card">
+                        <h5 class="fw-bold">Nouvelle Catégorie</h5>
+                        <form onsubmit="addCategory(event)" class="mt-3">
+                            <input id="catName" class="form-control mb-2" placeholder="Nom..." required>
+                            <button class="btn btn-primary w-100">Ajouter</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="glass-card">
+                        <ul id="catList" class="list-group list-group-flush"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    /* --- DATA MANAGEMENT --- */
+    let products = JSON.parse(localStorage.getItem("products")) || [];
+    let categories = JSON.parse(localStorage.getItem("categories")) || ["Informatique", "Accessoires"];
+    let chartInstance = null;
+
+    /* --- SPA NAVIGATION --- */
+    function showModule(id, el) {
+        document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+        el.classList.add('active');
+        if(id === 'dashboard') updateDashboard();
+    }
+
+    /* --- CATEGORY LOGIC --- */
+    function renderCategories() {
+        const sel = document.getElementById("pcat");
+        const ul = document.getElementById("catList");
+        sel.innerHTML = ""; ul.innerHTML = "";
+        categories.forEach((c, i) => {
+            sel.innerHTML += `<option value="${c}">${c}</option>`;
+            ul.innerHTML += `<li class="list-group-item d-flex justify-content-between align-items-center">${c}
+                <button class="btn btn-sm btn-outline-danger border-0" onclick="delCat(${i})"><i class="fas fa-trash"></i></button></li>`;
+        });
+        localStorage.setItem("categories", JSON.stringify(categories));
+    }
+
+    function addCategory(e) {
+        e.preventDefault();
+        const input = document.getElementById("catName");
+        if(input.value.trim()) {
+            categories.push(input.value.trim());
+            input.value = "";
+            renderCategories();
+        }
+    }
+
+    function delCat(i) {
+        categories.splice(i, 1);
+        renderCategories();
+    }
+
+    /* --- PRODUCT CRUD --- */
+    document.getElementById("productForm").onsubmit = e => {
+        e.preventDefault();
+        const id = document.getElementById("pid").value || Date.now();
+        const p = {
+            id: id,
+            name: document.getElementById("pname").value,
+            price: parseFloat(document.getElementById("pprice").value),
+            qty: parseInt(document.getElementById("pqty").value),
+            cat: document.getElementById("pcat").value
+        };
+        const idx = products.findIndex(x => x.id == id);
+        idx > -1 ? products[idx] = p : products.push(p);
+        
+        localStorage.setItem("products", JSON.stringify(products));
+        e.target.reset();
+        document.getElementById("pid").value = "";
+        renderProducts();
+    };
+
+    function renderProducts(filter = "") {
+        const list = document.getElementById("productList");
+        list.innerHTML = "";
+        products.filter(p => p.name.toLowerCase().includes(filter.toLowerCase()))
+        .forEach(p => {
+            list.innerHTML += `<tr>
+                <td><div class="fw-bold">${p.name}</div><div class="small text-muted">${p.cat}</div></td>
+                <td>${p.price.toFixed(2)} €</td>
+                <td><span class="badge ${p.qty < 5 ? 'bg-danger':'bg-success'} rounded-pill">${p.qty}</span></td>
+                <td>
+                    <button class="btn btn-sm btn-light text-primary" onclick="editProduct(${p.id})"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-sm btn-light text-danger" onclick="delProduct(${p.id})"><i class="fas fa-trash"></i></button>
+                </td>
+            </tr>`;
+        });
+        updateDashboard();
+    }
+
+    function editProduct(id) {
+        const p = products.find(x => x.id == id);
+        document.getElementById("pid").value = p.id;
+        document.getElementById("pname").value = p.name;
+        document.getElementById("pprice").value = p.price;
+        document.getElementById("pqty").value = p.qty;
+        document.getElementById("pcat").value = p.cat;
+        showModule('products', document.querySelector('[onclick*="products"]'));
+    }
+
+    function delProduct(id) {
+        if(confirm("Supprimer ?")) {
+            products = products.filter(x => x.id != id);
+            localStorage.setItem("products", JSON.stringify(products));
+            renderProducts();
+        }
+    }
+
+    /* --- DASHBOARD LOGIC --- */
+    function updateDashboard() {
+        document.getElementById("kpiProducts").innerText = products.length;
+        document.getElementById("kpiStock").innerText = products.reduce((s,p)=> s + p.qty, 0);
+        const totalVal = products.reduce((s,p)=> s + (p.qty * p.price), 0);
+        document.getElementById("kpiValue").innerText = totalVal.toLocaleString() + " €";
+
+        // Charting
+        const dataMap = {};
+        products.forEach(p => dataMap[p.cat] = (dataMap[p.cat] || 0) + p.qty);
+        
+        const ctx = document.getElementById("chart").getContext('2d');
+        if(chartInstance) chartInstance.destroy();
+        chartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(dataMap),
+                datasets: [{ label: 'Stock', data: Object.values(dataMap), backgroundColor: '#6366f1', borderRadius: 5 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    }
+
+    /* --- API LOGIC (Asynchronous & Non-Blocking) --- */
+    async function initAPI() {
+        try {
+            const res = await fetch("https://fakestoreapi.com/products?limit=5");
+            if(!res.ok) throw new Error();
+            const data = await res.json();
+            document.getElementById("apiStatus").innerHTML = `<i class="fas fa-check-circle text-success"></i> API Ready`;
+            document.getElementById("apiInfo").innerHTML = `Connexion établie. <br> ${data.length} produits détectés sur le marché.`;
+        } catch (e) {
+            document.getElementById("apiStatus").innerHTML = `<i class="fas fa-exclamation-triangle text-warning"></i> Offline Mode`;
+            document.getElementById("apiInfo").innerHTML = "Impossible de joindre le serveur. Utilisation du stockage local uniquement.";
+        }
+    }
+
+    /* --- INIT --- */
+    window.onload = () => {
+        renderCategories();
+        renderProducts();
+        initAPI();
+    };
+</script>
+
+</body>
+</html>
