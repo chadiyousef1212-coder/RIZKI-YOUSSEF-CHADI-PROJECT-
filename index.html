@@ -4,28 +4,15 @@
     <meta charset="UTF-8">
     <title>TechStore – Premium Backoffice</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root { --primary: #6366f1; --dark: #0f172a; --sidebar-width: 260px; }
-        body { background: #f8fafc; font-family: 'Inter', sans-serif; margin: 0; overflow-x: hidden; }
-        .sidebar { width: var(--sidebar-width); height: 100vh; position: fixed; background: var(--dark); color: white; padding: 2rem 1rem; z-index: 1000; }
-        .sidebar-brand { font-size: 1.5rem; font-weight: 700; margin-bottom: 2rem; display: flex; align-items: center; gap: 10px; }
-        .sidebar a { display: flex; align-items: center; gap: 12px; padding: 12px 1rem; color: #94a3b8; text-decoration: none; border-radius: 8px; transition: 0.3s; cursor: pointer; }
-        .sidebar a:hover, .sidebar a.active { background: rgba(255, 255, 255, 0.1); color: white; }
-        .sidebar a.active { background: var(--primary); box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4); }
-        .main-content { margin-left: var(--sidebar-width); min-height: 100vh; display: flex; flex-direction: column; }
-        .navbar-custom { background: white; padding: 1rem 2rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-        .container-fluid { padding: 2rem; }
-        .module { display: none; }
-        .module.active { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .glass-card { background: white; border-radius: 16px; border: none; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 1.5rem; margin-bottom: 1.5rem; }
-        .table-responsive-custom { max-height: 500px; overflow-y: auto; border-radius: 12px; background: white; }
-        .table thead { position: sticky; top: 0; background: #f8fafc; z-index: 10; }
-    </style>
+
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -45,6 +32,7 @@
     </nav>
 
     <div class="container-fluid">
+        
         <div id="dashboard" class="module active">
             <div class="row g-4">
                 <div class="col-md-4">
@@ -69,6 +57,7 @@
                     </div>
                 </div>
             </div>
+
             <div class="row mt-2">
                 <div class="col-md-8">
                     <div class="glass-card">
@@ -107,6 +96,7 @@
                     </div>
                 </form>
             </div>
+
             <div class="glass-card p-0 overflow-hidden">
                 <div class="p-3 border-bottom d-flex justify-content-between">
                     <input class="form-control w-50" placeholder="Rechercher..." oninput="renderProducts(this.value)">
@@ -140,145 +130,10 @@
                 </div>
             </div>
         </div>
+
     </div>
 </div>
 
-<script>
-    let products = JSON.parse(localStorage.getItem("products")) || [];
-    let categories = JSON.parse(localStorage.getItem("categories")) || ["Informatique", "Accessoires"];
-    let chartInstance = null;
-
-    function showModule(id, el) {
-        document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
-        if(el) el.classList.add('active');
-        if(id === 'dashboard') updateDashboard();
-    }
-
-    function renderCategories() {
-        const sel = document.getElementById("pcat");
-        const ul = document.getElementById("catList");
-        if(!sel || !ul) return;
-        sel.innerHTML = ""; ul.innerHTML = "";
-        categories.forEach((c, i) => {
-            sel.innerHTML += `<option value="${c}">${c}</option>`;
-            ul.innerHTML += `<li class="list-group-item d-flex justify-content-between align-items-center">${c}<button class="btn btn-sm btn-outline-danger border-0" onclick="delCat(${i})"><i class="fas fa-trash"></i></button></li>`;
-        });
-        localStorage.setItem("categories", JSON.stringify(categories));
-    }
-
-    function addCategory(e) {
-        e.preventDefault();
-        const input = document.getElementById("catName");
-        if(input.value.trim()) {
-            categories.push(input.value.trim());
-            input.value = "";
-            renderCategories();
-        }
-    }
-
-    function delCat(i) {
-        categories.splice(i, 1);
-        renderCategories();
-    }
-
-    document.getElementById("productForm").onsubmit = e => {
-        e.preventDefault();
-        const id = document.getElementById("pid").value || Date.now();
-        const p = {
-            id: id,
-            name: document.getElementById("pname").value,
-            price: parseFloat(document.getElementById("pprice").value),
-            qty: parseInt(document.getElementById("pqty").value),
-            cat: document.getElementById("pcat").value
-        };
-        const idx = products.findIndex(x => x.id == id);
-        idx > -1 ? products[idx] = p : products.push(p);
-        localStorage.setItem("products", JSON.stringify(products));
-        e.target.reset();
-        document.getElementById("pid").value = "";
-        renderProducts();
-    };
-
-    function renderProducts(filter = "") {
-        const list = document.getElementById("productList");
-        if(!list) return;
-        list.innerHTML = "";
-        products.filter(p => p.name.toLowerCase().includes(filter.toLowerCase()))
-        .forEach(p => {
-            list.innerHTML += `<tr><td><div class="fw-bold">${p.name}</div><div class="small text-muted">${p.cat}</div></td><td>${p.price.toFixed(2)} €</td><td><span class="badge ${p.qty < 5 ? 'bg-danger':'bg-success'} rounded-pill">${p.qty}</span></td><td><button class="btn btn-sm btn-light text-primary" onclick="editProduct(${p.id})"><i class="fas fa-edit"></i></button><button class="btn btn-sm btn-light text-danger" onclick="delProduct(${p.id})"><i class="fas fa-trash"></i></button></td></tr>`;
-        });
-        updateDashboard();
-    }
-
-    function editProduct(id) {
-        const p = products.find(x => x.id == id);
-        document.getElementById("pid").value = p.id;
-        document.getElementById("pname").value = p.name;
-        document.getElementById("pprice").value = p.price;
-        document.getElementById("pqty").value = p.qty;
-        document.getElementById("pcat").value = p.cat;
-        showModule('products', document.querySelector('[onclick*="products"]'));
-    }
-
-    function delProduct(id) {
-        if(confirm("Supprimer ?")) {
-            products = products.filter(x => x.id != id);
-            localStorage.setItem("products", JSON.stringify(products));
-            renderProducts();
-        }
-    }
-
-    function updateDashboard() {
-        const kpiP = document.getElementById("kpiProducts");
-        if(!kpiP) return;
-        kpiP.innerText = products.length;
-        document.getElementById("kpiStock").innerText = products.reduce((s,p)=> s + p.qty, 0);
-        const totalVal = products.reduce((s,p)=> s + (p.qty * p.price), 0);
-        document.getElementById("kpiValue").innerText = totalVal.toLocaleString() + " €";
-        const dataMap = {};
-        products.forEach(p => dataMap[p.cat] = (dataMap[p.cat] || 0) + p.qty);
-        const canvas = document.getElementById("chart");
-        if(!canvas) return;
-        const ctx = canvas.getContext('2d');
-        if(chartInstance) chartInstance.destroy();
-        chartInstance = new Chart(ctx, {
-            type: 'bar',
-            data: { labels: Object.keys(dataMap), datasets: [{ label: 'Stock', data: Object.values(dataMap), backgroundColor: '#6366f1', borderRadius: 5 }] },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
-    }
-
-    async function initAPI() {
-        const badge = document.getElementById("apiStatus");
-        const info = document.getElementById("apiInfo");
-        
-        // FIX: Using a CORS Proxy to bypass local file restrictions
-        const proxyUrl = "https://api.allorigins.win/get?url=";
-        const targetUrl = encodeURIComponent("https://fakestoreapi.com/products?limit=5");
-
-        try {
-            const res = await fetch(proxyUrl + targetUrl);
-            if(!res.ok) throw new Error();
-            const result = await res.json();
-            const data = JSON.parse(result.contents); // AllOrigins returns data in a 'contents' string
-
-            badge.innerHTML = `<i class="fas fa-check-circle text-success"></i> API Connectée`;
-            badge.className = "badge bg-light text-success border border-success";
-            info.innerHTML = `Synchro réussie via proxy.<br>${data.length} produits détectés.`;
-        } catch (e) {
-            badge.innerHTML = `<i class="fas fa-exclamation-triangle text-danger"></i> Hors-ligne`;
-            badge.className = "badge bg-light text-danger border border-danger";
-            info.innerHTML = "Échec : Le navigateur bloque l'accès direct (CORS).";
-        }
-    }
-
-    window.onload = () => {
-        renderCategories();
-        renderProducts();
-        initAPI();
-    };
-</script>
+<script src="script.js"></script>
 </body>
 </html>
