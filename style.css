@@ -11,7 +11,6 @@ body {
     overflow-x: hidden;
 }
 
-/* --- SIDEBAR --- */
 .sidebar {
     width: var(--sidebar-width);
     height: 100vh;
@@ -41,6 +40,7 @@ body {
     border-radius: 8px;
     transition: 0.3s;
     cursor: pointer;
+    margin-bottom: 5px;
 }
 
 .sidebar a:hover, .sidebar a.active {
@@ -50,15 +50,12 @@ body {
 
 .sidebar a.active {
     background: var(--primary);
-    shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
 }
 
-/* --- MAIN LAYOUT --- */
 .main-content {
     margin-left: var(--sidebar-width);
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
 }
 
 .navbar-custom {
@@ -73,34 +70,30 @@ body {
 .container-fluid { padding: 2rem; }
 
 .module { display: none; }
-.module.active { display: block; animation: fadeIn 0.3s ease; }
+.module.active { display: block; animation: fadeIn 0.4s ease; }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-/* --- CARDS & UI --- */
 .glass-card {
     background: white;
     border-radius: 16px;
     border: none;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
     padding: 1.5rem;
     margin-bottom: 1.5rem;
 }
 
-/* FIX: The Scrollable Table Container */
 .table-responsive-custom {
     max-height: 500px;
     overflow-y: auto;
-    border-radius: 12px;
-    background: white;
 }
 
 .table thead {
     position: sticky;
     top: 0;
-    background: #f8fafc;
+    background: white;
     z-index: 10;
 }
